@@ -18,11 +18,11 @@ This allows for:
 volumes:
   - "./data/persistent/postgres_data:/var/lib/postgresql/data:rw"
   - "./data/persistent/pgadmin_data:/var/lib/pgadmin:rw"
-````
+```
 
----
+## Dev Tips
 
-## 🔐 PgAdmin Permissions Issue
+### PgAdmin Permissions Issue
 
 The official `dpage/pgadmin4` image runs as a non-root user with **UID 5050**.
 
@@ -32,7 +32,7 @@ When mounting a host directory to `/var/lib/pgadmin`, the container may fail to 
 ERROR: Failed to create the directory /var/lib/pgadmin/sessions: Permission denied
 ```
 
-### ✅ Solution
+#### ✅ Solution
 
 Manually set ownership of the mounted directory to UID `5050`:
 
@@ -43,6 +43,40 @@ sudo chown -R 5050:5050 ./data/persistent/pgadmin_data
 This grants PgAdmin permission to create necessary internal folders such as `sessions/`, `storage/`, and the SQLite config file `pgadmin4.db`.
 
 ---
+
+### 
+
+Perfecto, aquí tienes el extracto reformulado con ese enfoque comparativo:
+
+---
+
+### Table Creation – Differences Between `to_sql()` and Raw SQL with `engine.connect()`
+
+There are many ways to create tables in PostgreSQL using Python and SQLAlchemy. Two common approaches are:
+
+1. Using `pandas.DataFrame.to_sql()`
+2. Executing raw SQL through `engine.connect()` or `engine.begin()`
+
+While both can be used effectively, **they differ in how they handle transactions**:
+
+* `to_sql()` handles the entire operation internally — including opening the connection, creating the table, and committing the transaction. For example:
+
+  ```python
+  df.head(n=0).to_sql(name='yellow_taxi_data', con=engine, if_exists='replace')
+  ```
+
+  This will create (or replace) the table **without needing to call `commit()` explicitly**.
+
+* In contrast, when you execute raw SQL using `engine.connect()` and a cursor (or SQLAlchemy’s `execute()`), you are responsible for managing the transaction lifecycle — **including committing the changes**:
+
+  ```python
+  with engine.connect() as conn:
+      conn.execute(text("CREATE TABLE ..."))
+      conn.commit()  # Required to persist the change
+  ```
+
+**Summary:** Use `to_sql()` for quick and automatic DataFrame-to-table operations. Use raw SQL with manual commits when you need precise control over table schemas or complex operations.
+
 
 ## 🧪 PgAdmin Internal Structure (Observed)
 
